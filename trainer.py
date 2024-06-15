@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2024/6/10 23:52
-# @Author  : Young Zhang
+# @Author  : Qingyang Zhang
 # @File    : trainer.py
-# @Project : VoiceClassifier
+# @Project : AudioClassifier
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader

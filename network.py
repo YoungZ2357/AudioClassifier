@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2024/6/10 23:46
-# @Author  : Young Zhang
+# @Author  : Qingyang Zhang
 # @File    : network.py
-# @Project : VoiceClassifier
+# @Project : AudioClassifier
 import torch.nn as nn
 import torch
 
@@ -42,7 +42,7 @@ class ResNetCNN(nn.Module):
     def __init__(self, block, layers, output_size, expansion: int = 1):
         super(ResNetCNN, self).__init__()
         self.in_channels = 64
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -84,13 +84,42 @@ class GRURNN(nn.Module):
 
     def forward(self, x):
         out, _ = self.gru(x)
-        out = self.fc(out[:, -1, :])  # 取最后一个时刻的输出作为模型输出
+        out = self.fc(out[:, -1, :])
         return out
 
 
 class ResnetGRUNet(nn.Module):
-    def __init__(self,):
+    def __init__(
+            self,
+            # resenet setting
+            resnet_layers: list[int, int, int, int],
+            res_block_expasion: int,
+            # gru setting
+            rnn_hidden: int,
+            # tensor concation setting
+            tmp_size: int,
+            # classifier setting
+            n_classes: int
+    ):
         super(ResnetGRUNet, self).__init__()
-
-    def forward(self, x):
+        self.cnn = ResNetCNN(ResidualBlock, resnet_layers, tmp_size, res_block_expasion)
+        self.rnn = GRURNN(1, rnn_hidden, tmp_size)
+        self.classifier = nn.Sequential(
+            nn.Linear(tmp_size * 2, tmp_size),
+            nn.SiLU(),
+            nn.Linear(tmp_size, int(tmp_size / 2)),
+            nn.SiLU(),
+            nn.Linear(tmp_size, int(tmp_size / 2))
+        )
         pass
+
+    def forward(self, mel_spec, audio_tensor):
+        cnn_out = self.cnn(mel_spec)
+        rnn_out = self.rnn(audio_tensor)
+        tmp = torch.cat([cnn_out, rnn_out])
+        result = self.classifier(tmp)
+        return tmp
+
+# planning to implement classification based on given feature kinds and its weights
+
+

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2024/6/10 23:52
-# @Author  : Young Zhang
+# @Author  : Qingyang Zhang
 # @File    : preprocess.py
-# @Project : VoiceClassifier
+# @Project : AudioClassifier
 import os
 import torch
 
@@ -45,7 +45,7 @@ def pad_wav(single_wav: torch.Tensor, desired_length) -> torch.Tensor:
 def stretch_wav(single_wav: torch.Tensor, desired_length, sample_rate) -> torch.Tensor:
     """reshape audio tensor into a desired length by time strenching
     !!!DEPRECATED!!!
-
+    !!!Planing to implement
     :param single_wav: audio tensor variable
     :param desired_length: desired_length: target length of the tensor
     :param sample_rate: sample rate of the audio
