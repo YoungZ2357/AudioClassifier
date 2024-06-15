@@ -37,7 +37,6 @@ class ResidualBlock(nn.Module):
         return out
 
 
-# 定义 ResNet CNN 模型
 class ResNetCNN(nn.Module):
     def __init__(self, block, layers, output_size, expansion: int = 1):
         super(ResNetCNN, self).__init__()
@@ -109,17 +108,14 @@ class ResnetGRUNet(nn.Module):
             nn.SiLU(),
             nn.Linear(tmp_size, int(tmp_size / 2)),
             nn.SiLU(),
-            nn.Linear(tmp_size, int(tmp_size / 2))
+            nn.Linear(int(tmp_size/2), n_classes)
         )
-        pass
 
     def forward(self, mel_spec, audio_tensor):
         cnn_out = self.cnn(mel_spec)
         rnn_out = self.rnn(audio_tensor)
         tmp = torch.cat([cnn_out, rnn_out])
         result = self.classifier(tmp)
-        return tmp
+        return result
 
 # planning to implement classification based on given feature kinds and its weights
-
-
