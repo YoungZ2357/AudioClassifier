@@ -19,7 +19,7 @@ class AudioDataset(Dataset):
 
     def __getitem__(self, idx):
         """Name of the file should be: {identifier}_{label}.wav
-        The type of the label should be string or int
+        The type of the label should be string ,int or one-hot encoding
 
         :param idx:
         :return: (1d audio tensor, mel spectrotram, label)
@@ -46,4 +46,5 @@ def get_loader(
         dataset,
         batch_size=batch_size,
         shuffle=shuffle,
+        num_workers=num_workers
     )

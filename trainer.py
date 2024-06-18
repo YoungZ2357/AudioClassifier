@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import torch.optim as optim
+from torch.optim.lr_scheduler import ExponentialLR
 
 
 def train_val_classifier(
@@ -14,13 +15,12 @@ def train_val_classifier(
         model: nn.Module,
         train_loader: DataLoader,
         val_loader: DataLoader,
-
         # optimizer and scheduler
         optimizer: str = "adam",
-        scheduler: bool = True,
-
+        lr_decay: float = .95,
+        decay_gap: int = 50,
         # device
-        device: str = "cpu",
+        device: str = "cuda" if torch.cuda.is_available() else "cpu",
         # hyperparameters
         epochs: int = 300,
         lr: float = .001,
@@ -37,6 +37,7 @@ def train_val_classifier(
     optimizer = optim_handler[optimizer]
     criterion = nn.CrossEntropyLoss()
     # update parameters
+    scheduler = ExponentialLR(optimizer, gamma=lr_decay)
     for epoch in range(epochs):
         train_loss = 0
         train_acc = 0
@@ -53,6 +54,9 @@ def train_val_classifier(
                 train_acc += (y_hat.argmax(1) == y).type(torch.float).sum().item()
         train_loss /= size
         train_acc /= batch
+
+        if epoch % decay_gap == 0:
+            scheduler.step()
         # if show_info:
         #     print(f"EPOCH:{epoch + 1}: Begin validation")
         val_loss = 0
@@ -70,9 +74,8 @@ def train_val_classifier(
         val_loss /= batch
         val_acc /= size
         if show_info:
-            template = f"{'=' * 20}EPOCH:{epoch+1:^11}{'=' * 20}\n" \
+            template = f"{'=' * 20}EPOCH:{epoch + 1:^11}{'=' * 20}\n" \
                        f"{f'train loss:{train_loss}':<12}|{f'train acc:{train_acc}':<12}|" \
                        f"{f'val loss:{val_loss}':<12}|{f'val acc:{val_acc}':<12}\n" \
 
             print(template)
-
