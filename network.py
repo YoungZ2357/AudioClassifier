@@ -92,7 +92,7 @@ class ResnetGRUNet(nn.Module):
     def __init__(
             self,
             # resenet setting
-            resnet_layers: list[int, int, int, int],
+            resnet_layers: list[int],
             res_block_expasion: int,
             # gru setting
             rnn_hidden: int,

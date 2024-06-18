@@ -64,7 +64,7 @@ def to_melspec(
         n_fft: int = 400,
         win_length: int = 400,
         hop_length: int = 160,
-        n_mels: int = 64,
+        n_mels: int = 32,
         log_transform: bool = True
 ) -> torch.Tensor:
     """

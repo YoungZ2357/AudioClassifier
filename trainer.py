@@ -42,16 +42,21 @@ def train_val_classifier(
         train_loss = 0
         train_acc = 0
         model.train()
-        for X, y in train_loader:
-            X, y = X.to(device), y.to(device)
+        for mel_spec, wav, label in train_loader:
+            # print(mel_spec.shape)
+            # print(type(label))
+            # print(label)
+            label = torch.tensor(label)
+            mel_spec, wav, label = mel_spec.to(device), wav.to(device), label.to(device)
+
             optimizer.zero_grad()
-            y_hat = model(X)
-            loss = criterion(y_hat, y)
+            y_hat = model(mel_spec, wav)
+            loss = criterion(y_hat, label)
             loss.backward()
             optimizer.step()
             with torch.no_grad():
                 train_loss += loss.item()
-                train_acc += (y_hat.argmax(1) == y).type(torch.float).sum().item()
+                train_acc += (y_hat.argmax(1) == label).type(torch.float).sum().item()
         train_loss /= size
         train_acc /= batch
 
@@ -64,13 +69,14 @@ def train_val_classifier(
         model.eval()
         size = len(val_loader.dataset)
         batch = len(val_loader)
-        for X_val, y_val in val_loader:
-            X_val, y_val = X_val.to(device), y_val.to(device)
-            val_hat = model(X_val)
-            loss_val = criterion(val_hat, y_val)
+        for mel_spec_val, wav_val, label_val in val_loader:
+            label_val = torch.tensor(label_val)
+            mel_spec_val, wav_val, label_val = mel_spec_val.to(device), wav_val, label_val.to(device)
+            val_hat = model(mel_spec_val, wav_val)
+            loss_val = criterion(val_hat, label_val)
             with torch.no_grad():
                 val_loss += loss_val.item()
-                val_acc += (val_hat.argmax(1) == y_val).type(torch.float).sum().item()
+                val_acc += (val_hat.argmax(1) == label_val).type(torch.float).sum().item()
         val_loss /= batch
         val_acc /= size
         if show_info:

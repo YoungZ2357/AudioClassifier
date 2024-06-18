@@ -2,13 +2,15 @@
 
 >小白用来练手的，有很多不懂的东西，求看不顺眼的大佬们轻喷，如果能给建议就实在感激不尽！
 
+测试数据集来自<a href="https://www.kaggle.com/datasets/deepcontractor/musical-instrument-chord-classification">kaggle</a>
+
 ### 1.目前进度
-- Dataloader可用
 - 训练脚本可用
 - [!]数据预处理能跑，但是用的是最笨的填0法，且指定音频长度
 - network.py 可用
 - [!]还在补全markdown文件和调试用的ipynb文件
 ### 2.目前目标
+- [!]修改Dataset类使标签值可用
 - 修改神经网络类，使其能根据参数自动生成结构
 
 ### 3.总体目标

@@ -4,7 +4,7 @@
 # @File    : build_dataloader.py
 # @Project : AudioClassifier
 
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, random_split
 from preprocess import *
 
 
@@ -18,33 +18,58 @@ class AudioDataset(Dataset):
         return len(self.file_list)
 
     def __getitem__(self, idx):
-        """Name of the file should be: {identifier}_{label}.wav
-        The type of the label should be string ,int or one-hot encoding
+        """Change the methods of processing labels accroding to the name of your files
 
         :param idx:
         :return: (1d audio tensor, mel spectrotram, label)
         """
         name = self.file_list[idx]
-        # process X value
+
+        # process input value
         file_path = os.path.join(self.root_dir, name)
         wav, sample_rate = torchaudio.load(file_path)
         wav = pad_wav(single_wav=wav, desired_length=self.max_length)
         mel_spec = to_melspec(wav, sample_rate=sample_rate)
+
         # process label
-        label = name.split("_")[-1].strip(".wav")
-        return wav, mel_spec, label
+        label = name.split("_")[0]
+        return mel_spec, wav, label
 
 
-def get_loader(
+def get_loaders(
         root_dir: str,
         batch_size: int,
+        test_split: float = 0.2,
         num_workers: int = 1,
         shuffle: bool = True
-) -> DataLoader:
+) -> tuple[DataLoader, DataLoader]:
+    """
+    Splits the dataset into training and testing sets and returns the corresponding data loaders.
+
+    :param root_dir: Directory where audio files are stored.
+    :param batch_size: Batch size for the data loaders.
+    :param test_split: Fraction of the dataset to be used as the test set.
+    :param num_workers: Number of worker processes for data loading.
+    :param shuffle: Whether to shuffle the dataset before splitting.
+    :return: A tuple containing the training data loader and the test data loader.
+    """
     dataset = AudioDataset(root_dir)
-    return DataLoader(
-        dataset,
+    test_size = int(len(dataset) * test_split)
+    train_size = len(dataset) - test_size
+    train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
+
+    train_loader = DataLoader(
+        train_dataset,
         batch_size=batch_size,
         shuffle=shuffle,
         num_workers=num_workers
     )
+
+    test_loader = DataLoader(
+        test_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers
+    )
+
+    return train_loader, test_loader
