@@ -8,19 +8,20 @@ import torch
 
 
 class ResidualBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, stride=1, expansion: int = 4):
+    def __init__(self, in_channels, out_channels, stride=1, expansion=1):
         super(ResidualBlock, self).__init__()
+        self.expansion = expansion
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(out_channels)
+        self.conv2 = nn.Conv2d(out_channels, out_channels * expansion, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(out_channels * expansion)
+
         self.downsample = None
-        self.expansion = expansion
-        if stride != 1 or in_channels != out_channels:
+        if stride != 1 or in_channels != out_channels * expansion:
             self.downsample = nn.Sequential(
-                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(out_channels)
+                nn.Conv2d(in_channels, out_channels * expansion, kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(out_channels * expansion)
             )
 
     def forward(self, x):
@@ -38,14 +39,14 @@ class ResidualBlock(nn.Module):
 
 
 class ResNetCNN(nn.Module):
-    def __init__(self, block, layers, output_size, expansion: int = 1):
+    def __init__(self, block, layers, output_size, expansion=1):
         super(ResNetCNN, self).__init__()
         self.in_channels = 64
         self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.layer1 = self.make_layer(block, 64, layers[0])
+        self.layer1 = self.make_layer(block, 64, layers[0], expansion=expansion)
         self.layer2 = self.make_layer(block, 128, layers[1], stride=2, expansion=expansion)
         self.layer3 = self.make_layer(block, 256, layers[2], stride=2, expansion=expansion)
         self.layer4 = self.make_layer(block, 512, layers[3], stride=2, expansion=expansion)
@@ -53,10 +54,10 @@ class ResNetCNN(nn.Module):
         self.fc = nn.Linear(512 * expansion, output_size)
 
     def make_layer(self, block, out_channels, blocks, stride=1, expansion=1):
-        layers = [block(self.in_channels, out_channels, stride)]
+        layers = [block(self.in_channels, out_channels, stride, expansion)]
         self.in_channels = out_channels * expansion
         for _ in range(1, blocks):
-            layers.append(block(self.in_channels, out_channels))
+            layers.append(block(self.in_channels, out_channels, expansion=expansion))
         return nn.Sequential(*layers)
 
     def forward(self, x):
@@ -114,8 +115,12 @@ class ResnetGRUNet(nn.Module):
     def forward(self, mel_spec, audio_tensor):
         cnn_out = self.cnn(mel_spec)
         rnn_out = self.rnn(audio_tensor)
-        tmp = torch.cat([cnn_out, rnn_out])
+        # print(f"cnn out shape: {cnn_out.shape}")
+        # print(f"rnn out shape: {rnn_out.shape}")
+        tmp = torch.cat([cnn_out, rnn_out], dim=1)
+        # print(f"tmp shape: {tmp.shape}")
         result = self.classifier(tmp)
         return result
 
 # planning to implement classification based on given feature kinds and its weights
+
