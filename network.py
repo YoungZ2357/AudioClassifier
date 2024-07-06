@@ -96,6 +96,7 @@ class ResnetGRUNet(nn.Module):
             res_block_expasion: int,
             # gru setting
             rnn_hidden: int,
+            seq_len: int,
             # tensor concation setting
             tmp_size: int,
             # classifier setting
@@ -103,11 +104,13 @@ class ResnetGRUNet(nn.Module):
     ):
         super(ResnetGRUNet, self).__init__()
         self.cnn = ResNetCNN(ResidualBlock, resnet_layers, tmp_size, res_block_expasion)
-        self.rnn = GRURNN(1, rnn_hidden, tmp_size)
+        self.rnn = GRURNN(seq_len, rnn_hidden, tmp_size)
         self.classifier = nn.Sequential(
             nn.Linear(tmp_size * 2, tmp_size),
+            nn.Dropout(p=.5),
             nn.SiLU(),
             nn.Linear(tmp_size, int(tmp_size / 2)),
+            nn.Dropout(p=.5),
             nn.SiLU(),
             nn.Linear(int(tmp_size/2), n_classes)
         )

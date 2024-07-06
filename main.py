@@ -27,8 +27,9 @@ n_classes = 2
 
 
 if __name__ == '__main__':
-    model = ResnetGRUNet(resnet_layers, block_expansion, rnn_hidden, tmp_size, n_classes)
-    train_loader, test_loader = get_loaders(root_dir, batch_size)
-    train_val_classifier(model, train_loader, test_loader)
 
+    train_loader, test_loader = get_loaders(root_dir, batch_size)
+
+    model = ResnetGRUNet(resnet_layers, block_expansion, rnn_hidden, desired_length, tmp_size, n_classes)
+    train_val_classifier(model, train_loader, test_loader)
     pass

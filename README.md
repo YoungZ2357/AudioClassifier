@@ -4,16 +4,20 @@
 
 测试数据集来自<a href="https://www.kaggle.com/datasets/deepcontractor/musical-instrument-chord-classification">kaggle</a>
 
-### 1.目前进度
-- 训练脚本可用
-- [!]数据预处理能跑，但是用的是最笨的填0法，且指定音频长度
-- network.py 可用
-- [!]还在补全markdown文件和调试用的ipynb文件
-### 2.目前目标
-- [!]修改Dataset类使标签值可用
-- 修改神经网络类，使其能根据参数自动生成结构
+### 虚拟环境相关
+#### 基本环境
+python 3.10(使用较低的版本会使某些注释非法) \
+matplotlib 
 
-### 3.总体目标
-- 修改Dataloader类，使其能根据参数返回对应类型 
-- 修改前向传播方法，使其能根据特征种类和对应权重进行计算，大概会用解包实现
-- 优化预处理方法，代替填0法和只使用最长长度
+#### 深度学习
+PyTorch 2.3.0 \
+torchaudio 2.3.0
+#### 音频处理
+pysoundfile(配合torchaudio) \
+python3.8下使用librosa（相同步骤在服务器上无效，原因未知）
+### 1.目前进度
+- 可以进行训练了
+- 还在补全markdown文件和调试用的ipynb文件
+### 2.目前目标
+- 处理过拟合问题和构建更简单的模型
+- 更换更复杂的数据集

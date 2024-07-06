@@ -18,7 +18,7 @@ def train_val_classifier(
         # optimizer and scheduler
         optimizer: str = "adam",
         lr_decay: float = .95,
-        decay_gap: int = 50,
+        decay_gap: int = 20,
         # device
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
         # hyperparameters
@@ -29,8 +29,7 @@ def train_val_classifier(
 ) -> None:
     model = model.to(device)
 
-    size = len(train_loader.dataset)
-    batch = len(train_loader)
+
     optim_handler = {
         "adam": optim.Adam(model.parameters(), lr=lr)
     }
@@ -39,6 +38,9 @@ def train_val_classifier(
     # update parameters
     scheduler = ExponentialLR(optimizer, gamma=lr_decay)
     for epoch in range(epochs):
+        size = len(train_loader.dataset)
+        # print(size)
+        batch = len(train_loader)
         train_loss = 0
         train_acc = 0
         model.train()
@@ -46,7 +48,7 @@ def train_val_classifier(
             # print(mel_spec.shape)
             # print(type(label))
             # print(label)
-            label = torch.tensor(label)
+            label = torch.Tensor(label).to(device)
             mel_spec, wav, label = mel_spec.to(device), wav.to(device), label.to(device)
 
             optimizer.zero_grad()
@@ -57,11 +59,12 @@ def train_val_classifier(
             with torch.no_grad():
                 train_loss += loss.item()
                 train_acc += (y_hat.argmax(1) == label).type(torch.float).sum().item()
-        train_loss /= size
-        train_acc /= batch
+        train_loss /= batch
+        train_acc /= size
 
-        if epoch % decay_gap == 0:
+        if epoch+1 % decay_gap == 0:
             scheduler.step()
+            print(f"Learning rate decayed as {optimizer.param_groups[0]['lr']} at epoch {epoch}")
         # if show_info:
         #     print(f"EPOCH:{epoch + 1}: Begin validation")
         val_loss = 0
@@ -70,7 +73,7 @@ def train_val_classifier(
         size = len(val_loader.dataset)
         batch = len(val_loader)
         for mel_spec_val, wav_val, label_val in val_loader:
-            label_val = torch.tensor(label_val)
+            label_val = torch.Tensor(label_val)
             mel_spec_val, wav_val, label_val = mel_spec_val.to(device), wav_val, label_val.to(device)
             val_hat = model(mel_spec_val, wav_val)
             loss_val = criterion(val_hat, label_val)
@@ -81,7 +84,7 @@ def train_val_classifier(
         val_acc /= size
         if show_info:
             template = f"{'=' * 20}EPOCH:{epoch + 1:^11}{'=' * 20}\n" \
-                       f"{f'train loss:{train_loss}':<12}|{f'train acc:{train_acc}':<12}|" \
-                       f"{f'val loss:{val_loss}':<12}|{f'val acc:{val_acc}':<12}\n" \
+                       f"{f'train loss:{round(train_loss, 4)}':<20}|{f'train acc:{round(train_acc, 4)}':<20}|" \
+                       f"{f'val loss:{round(val_loss, 4)}':<20}|{f'val acc:{round(val_acc, 4)}':<20}\n" \
 
             print(template)

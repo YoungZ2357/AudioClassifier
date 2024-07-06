@@ -13,9 +13,26 @@ class AudioDataset(Dataset):
         self.root_dir = root_dir
         self.file_list = [file for file in os.listdir(root_dir) if file.endswith(".wav")]
         self.max_length = get_desired_length(root_dir)
+        self.label_handler = self._get_label_mapper()
 
     def __len__(self):
         return len(self.file_list)
+
+    def _get_label_mapper(self) -> dict:
+        """ turn str type labels into int
+
+        :return:
+        """
+        labels = [file.split("_")[0] for file in self.file_list]
+        unique = sorted(set(labels))
+        handler = {
+            label: idx for idx, label in enumerate(unique)
+        }
+        return handler
+
+    def show_label_mapping(self):
+        for elem in self.label_handler:
+            print(elem)
 
     def __getitem__(self, idx):
         """Change the methods of processing labels accroding to the name of your files
@@ -30,9 +47,9 @@ class AudioDataset(Dataset):
         wav, sample_rate = torchaudio.load(file_path)
         wav = pad_wav(single_wav=wav, desired_length=self.max_length)
         mel_spec = to_melspec(wav, sample_rate=sample_rate)
-
         # process label
         label = name.split("_")[0]
+        label = self.label_handler[label]
         return mel_spec, wav, label
 
 
